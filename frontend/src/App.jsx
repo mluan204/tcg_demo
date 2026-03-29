@@ -13,6 +13,8 @@ function App() {
   const [error, setError] = useState("");
   const [backendReady, setBackendReady] = useState(false);
   const [backendMsg, setBackendMsg] = useState("Connecting to backend...");
+  const [lightboxImageUrl, setLightboxImageUrl] = useState("");
+  const [lightboxTitle, setLightboxTitle] = useState("");
 
   const previewUrl = useMemo(() => {
     if (!file) return "";
@@ -170,6 +172,17 @@ function App() {
     }
   }
 
+  function openLightbox(imageUrl, title) {
+    if (!imageUrl) return;
+    setLightboxImageUrl(imageUrl);
+    setLightboxTitle(title || "Result image");
+  }
+
+  function closeLightbox() {
+    setLightboxImageUrl("");
+    setLightboxTitle("");
+  }
+
   return (
     <main className="container">
       <h1>TCG Image Search Demo</h1>
@@ -264,6 +277,7 @@ function App() {
               <thead>
                 <tr>
                   <th>Rank</th>
+                  <th>Image</th>
                   <th>Distance</th>
                   <th>Product ID</th>
                   <th>Name</th>
@@ -277,6 +291,25 @@ function App() {
                 {results.map((item) => (
                   <tr key={`${item.rank}-${item.productId}`}>
                     <td>{item.rank}</td>
+                    <td>
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.name || `product-${item.productId}`}
+                          className="resultThumb"
+                          loading="lazy"
+                          title="Click to view full image"
+                          onClick={() =>
+                            openLightbox(item.imageUrl, item.name || `Product ${item.productId}`)
+                          }
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        ""
+                      )}
+                    </td>
                     <td>{Number(item.distance).toFixed(6)}</td>
                     <td>{item.productId}</td>
                     <td>{item.name || ""}</td>
@@ -298,6 +331,18 @@ function App() {
             </table>
           </div>
         </section>
+      )}
+
+      {lightboxImageUrl && (
+        <div className="lightboxOverlay" onClick={closeLightbox}>
+          <div className="lightboxCard" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="lightboxClose" onClick={closeLightbox}>
+              Close
+            </button>
+            <p className="lightboxTitle">{lightboxTitle}</p>
+            <img src={lightboxImageUrl} alt={lightboxTitle} className="lightboxImage" />
+          </div>
+        </div>
       )}
     </main>
   );

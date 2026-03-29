@@ -1,5 +1,11 @@
 :root {
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    sans-serif;
   color: #111827;
   background: #f9fafb;
 }
@@ -70,9 +76,19 @@ button:disabled {
 }
 
 .preview {
-  max-width: min(100%, 400px);
+  max-width: min(100%, 200px);
   border-radius: 8px;
   border: 1px solid #e5e7eb;
+}
+
+.resultThumb {
+  width: 80px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  display: block;
+  cursor: zoom-in;
 }
 
 .error {
@@ -121,3 +137,43 @@ td {
   white-space: nowrap;
 }
 
+.lightboxOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+}
+
+.lightboxCard {
+  background: #fff;
+  border-radius: 10px;
+  max-width: min(96vw, 2080px);
+  max-height: 206vh;
+  padding: 12px;
+  overflow: auto;
+}
+
+.lightboxClose {
+  margin-bottom: 8px;
+}
+
+.lightboxTitle {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.lightboxImage {
+  width: auto;
+  max-width: min(100%, 200vw);
+  height: auto;
+  max-height: 205vh;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
