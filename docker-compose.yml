@@ -1,0 +1,26 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      PORT: "4000"
+      PYTHON_BIN: "python3"
+      ARTIFACT_DIR: "/artifacts"
+      FRONTEND_ORIGIN: "http://localhost:8080"
+    volumes:
+      - ../artifacts:/artifacts:ro
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: "http://localhost:4000"
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+

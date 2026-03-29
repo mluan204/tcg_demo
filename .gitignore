@@ -1,0 +1,32 @@
+# Node dependencies
+**/node_modules/
+
+# Build outputs
+frontend/dist/
+frontend/.vite/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Python cache
+**/__pycache__/
+**/*.pyc
+
+# Runtime temp files
+backend/uploads/
+
