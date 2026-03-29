@@ -33,6 +33,7 @@ const workerPath = path.join(__dirname, "search_worker.py");
 const worker = spawn(PYTHON_BIN, [workerPath, "--artifacts", ARTIFACT_DIR], {
   stdio: ["pipe", "pipe", "pipe"],
 });
+let querySeq = 0;
 
 let buffer = "";
 let ready = false;
@@ -134,23 +135,42 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.post("/api/search", upload.single("image"), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "Thiếu file ảnh trong field 'image'" });
-  }
+  const queryId = `q-${++querySeq}`;
+  const startMs = Date.now();
 
-  if (!ready || workerError) {
-    fs.unlink(req.file.path, () => {});
-    return res.status(503).json({
-      error: workerError || "Worker chưa sẵn sàng. Kiểm tra log backend.",
-    });
+  if (!req.file) {
+    console.warn(`[search][${queryId}] Missing uploaded image file`);
+    return res.status(400).json({ error: "Missing image file in 'image' field" });
   }
 
   const topK = parseTopK(req.body?.topK);
+  console.log(
+    `[search][${queryId}] Received query filename="${req.file.originalname}" size=${req.file.size}B topK=${topK}`
+  );
+
+  if (!ready || workerError) {
+    fs.unlink(req.file.path, () => {});
+    console.warn(
+      `[search][${queryId}] Rejected because worker not ready: ${workerError || "not ready"}`
+    );
+    return res.status(503).json({
+      error: workerError || "Worker is not ready yet. Check backend logs.",
+    });
+  }
+
   try {
     const results = await askWorker(req.file.path, topK);
+    const elapsed = Date.now() - startMs;
+    console.log(
+      `[search][${queryId}] Success results=${results.length} elapsedMs=${elapsed}`
+    );
     res.json({ topK, total: results.length, results });
   } catch (err) {
-    res.status(500).json({ error: err.message || "Lỗi truy vấn ảnh" });
+    const elapsed = Date.now() - startMs;
+    console.error(
+      `[search][${queryId}] Failed elapsedMs=${elapsed} error=${err.message || "Unknown error"}`
+    );
+    res.status(500).json({ error: err.message || "Image search request failed" });
   } finally {
     fs.unlink(req.file.path, () => {});
   }

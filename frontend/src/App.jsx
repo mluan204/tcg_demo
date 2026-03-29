@@ -8,6 +8,8 @@ function App() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [backendReady, setBackendReady] = useState(false);
+  const [backendMsg, setBackendMsg] = useState("Connecting to backend...");
 
   const previewUrl = useMemo(() => {
     if (!file) return "";
@@ -22,13 +24,45 @@ function App() {
     };
   }, [previewUrl]);
 
+  useEffect(() => {
+    let timerId;
+
+    async function checkHealth() {
+      try {
+        const resp = await fetch(`${API_BASE}/api/health`);
+        const data = await resp.json();
+        const ok = Boolean(data?.ok);
+        setBackendReady(ok);
+        setBackendMsg(
+          ok ? "Backend is ready." : data?.workerError || "Backend is initializing model/index..."
+        );
+      } catch {
+        setBackendReady(false);
+        setBackendMsg("Cannot connect to backend.");
+      } finally {
+        timerId = setTimeout(checkHealth, 2500);
+      }
+    }
+
+    checkHealth();
+    return () => {
+      if (timerId) {
+        clearTimeout(timerId);
+      }
+    };
+  }, []);
+
   async function onSearch(e) {
     e.preventDefault();
     setError("");
     setResults([]);
 
     if (!file) {
-      setError("Bạn chưa chọn ảnh.");
+      setError("No image selected.");
+      return;
+    }
+    if (!backendReady) {
+      setError("Backend is not ready yet. Please wait for model/index loading to finish.");
       return;
     }
 
@@ -44,11 +78,11 @@ function App() {
       });
       const data = await resp.json();
       if (!resp.ok) {
-        throw new Error(data?.error || "Lỗi khi tìm kiếm");
+        throw new Error(data?.error || "Search request failed");
       }
       setResults(data.results || []);
     } catch (err) {
-      setError(err.message || "Có lỗi xảy ra");
+      setError(err.message || "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -57,11 +91,12 @@ function App() {
   return (
     <main className="container">
       <h1>TCG Image Search Demo</h1>
-      <p className="sub">Upload ảnh card và trả về kết quả top-k gần nhất từ FAISS index.</p>
+      <p className="sub">Upload a card image and get the top-k nearest results from the FAISS index.</p>
+      <p className={backendReady ? "ok" : "hint"}>{backendMsg}</p>
 
       <form className="card" onSubmit={onSearch}>
         <label className="field">
-          <span>Chọn ảnh</span>
+          <span>Select image</span>
           <input
             type="file"
             accept="image/*"
@@ -80,14 +115,14 @@ function App() {
           />
         </label>
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Đang tìm..." : "Tìm kiếm"}
+        <button type="submit" disabled={loading || !backendReady}>
+          {loading ? "Searching..." : "Search"}
         </button>
       </form>
 
       {previewUrl && (
         <section className="card">
-          <h2>Ảnh truy vấn</h2>
+          <h2>Query image</h2>
           <img src={previewUrl} alt="preview" className="preview" />
         </section>
       )}
@@ -96,8 +131,8 @@ function App() {
 
       {results.length > 0 && (
         <section className="card">
-          <h2>Kết quả</h2>
-          <p className="hint">Distance càng nhỏ càng gần.</p>
+          <h2>Results</h2>
+          <p className="hint">Smaller distance means closer match.</p>
           <div className="tableWrap">
             <table>
               <thead>
@@ -125,7 +160,7 @@ function App() {
                     <td>
                       {item.url ? (
                         <a href={item.url} target="_blank" rel="noreferrer">
-                          mở link
+                          open link
                         </a>
                       ) : (
                         ""
