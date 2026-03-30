@@ -36,13 +36,28 @@ Open 2 terminals.
 ```bash
 cd ../backend
 npm install
+```
+
+**macOS — using a virtual environment (recommended):**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Set environment variables and run:
+Then point `PYTHON_BIN` to the Python inside `.venv`:
 
 ```bash
-# Linux/macOS
+export PYTHON_BIN=$(pwd)/.venv/bin/python
+export ARTIFACT_DIR=/absolute/path/to/artifacts
+npm run dev
+```
+
+Without venv, install globally and use `python3`:
+
+```bash
+pip install -r requirements.txt
 export PYTHON_BIN=python3
 export ARTIFACT_DIR=/absolute/path/to/artifacts
 npm run dev
